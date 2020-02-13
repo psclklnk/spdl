@@ -10,7 +10,6 @@ def main():
     parser.add_argument("--env", type=str, default="point_mass",
                         choices=["point_mass", "point_mass_2d", "ball_catching"])
     parser.add_argument("--seed", type=int, default=1)
-    parser.add_argument("--view", action="store_true")
 
     args = parser.parse_args()
 

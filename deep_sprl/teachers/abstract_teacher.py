@@ -30,6 +30,7 @@ class BaseWrapper(gym.Env):
             self.observation_space = self.env.observation_space
         self.action_space = self.env.action_space
         self.reward_range = self.env.reward_range
+        self.metadata = self.env.metadata
 
         self.undiscounted_reward = 0.
         self.discounted_reward = 0.
