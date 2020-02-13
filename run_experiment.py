@@ -21,7 +21,8 @@ def main():
         from deep_sprl.experiments import PointMass2DExperiment
         exp = PointMass2DExperiment(args.base_log_dir, args.type, {}, args.seed)
     else:
-        raise RuntimeError("Not yet implemented")
+        from deep_sprl.experiments import BallCatchingExperiment
+        exp = BallCatchingExperiment(args.base_log_dir, args.type, {}, args.seed)
 
     exp.train()
     exp.evaluate()

@@ -55,6 +55,7 @@ class GoalGAN(AbstractTeacher):
         if self.is_replay:
             self.cur_context = None
             self.cur_successes = []
+            self.is_replay = False
         else:
             self.cur_successes.append(success)
             if len(self.cur_successes) >= self.n_rollouts:
@@ -69,7 +70,7 @@ class GoalGAN(AbstractTeacher):
                 self.cur_context = None
 
         if len(self.contexts) >= self.update_size:
-            labels = np.array(self.labels, dtype=np.float)
+            labels = np.array(self.labels, dtype=np.float)[:, None]
             if np.any(labels):
                 print("Training GoalGAN with " + str(len(self.contexts)) + " contexts")
                 self.gan.train(np.array(self.contexts), labels, 250)

@@ -62,14 +62,14 @@ class SelfPacedTeacher(AbstractTeacher, AbstractSelfPacedTeacher):
         if std_lower_bound is not None and kl_threshold is None:
             raise RuntimeError("Error! Both Lower Bound on standard deviation and kl threshold need to be set")
         else:
-            if isinstance(std_lower_bound, np.ndarray):
-                self.std_lower_bound = std_lower_bound
-            else:
-                self.std_lower_bound = np.ones(self.context_dim) * std_lower_bound
+            if std_lower_bound is not None:
+                if isinstance(std_lower_bound, np.ndarray):
+                    if std_lower_bound.shape[0] != self.context_dim:
+                        raise RuntimeError("Error! Wrong dimension of the standard deviation lower bound")
+                elif std_lower_bound is not None:
+                    std_lower_bound = np.ones(self.context_dim) * std_lower_bound
+            self.std_lower_bound = std_lower_bound
             self.kl_threshold = kl_threshold
-
-            if self.std_lower_bound.shape[0] != self.context_dim:
-                raise RuntimeError("Error! Wrong dimension of the standard deviation lower bound")
 
         # Create the initial context distribution
         if isinstance(initial_variance, np.ndarray):

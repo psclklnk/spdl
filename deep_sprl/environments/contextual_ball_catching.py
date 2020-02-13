@@ -20,8 +20,7 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
     def __init__(self,
                  xml_file='model.xml',
                  reset_noise_scale=0.05,
-                 context=np.array([3., -0.9, 1., -4., 0., 4.]),
-                 task_space_controlled=True):
+                 context=np.array([0.68, 0.9, 0.85])):
         utils.EzPickle.__init__(**locals())
 
         self.p_gains = np.array([200, 300, 100, 100, 10 * 2, 10 * 2, 2.5 * 2])
@@ -33,7 +32,6 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
         xml_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), "data", "barrett")
         xml_path = os.path.join(xml_dir, xml_file)
         self.step = self.dummy_step
-        self.task_space_controlled = task_space_controlled
 
         # We fix the first and third joint so that the robot only moves in the plane
         self.des_pos = np.zeros(7)
@@ -53,13 +51,9 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
         self.ground_geom_id = self.sim.model._geom_name2id["ground"]
 
     def _set_action_space(self):
-        if self.task_space_controlled:
-            self._ctrl_cost_weight = 1e-2
-            self.action_space = spaces.Box(low=-np.ones(6), high=np.ones(6), dtype=np.float32)
-        else:
-            self._ctrl_cost_weight = 1e-2
-            scale_array = 2. * np.array([1.985, 2.02, 2.9, 1.57, 2.7])
-            self.action_space = spaces.Box(low=-scale_array, high=scale_array, dtype=np.float32)
+        self._ctrl_cost_weight = 1e-2
+        scale_array = 2. * np.array([1.985, 2.02, 2.9, 1.57, 2.7])
+        self.action_space = spaces.Box(low=-scale_array, high=scale_array, dtype=np.float32)
         return self.action_space
 
     def control_cost(self, action):
@@ -100,14 +94,7 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
 
         # The action is the displacement and we assume to have a desired velocity of 0 in all joints
         for _ in range(self.frame_skip):
-            last_ball_pos = np.copy(self.sim.data.qpos[7:10])
-            last_ball_vel = np.copy(self.sim.data.qvel[7:10])
-            last_ball_acc = np.copy(self.sim.data.qacc[7:10])
-
-            if self.task_space_controlled:
-                self._inv_kin_control(action)
-            else:
-                self._joint_position_control(action)
+            self._joint_position_control(action)
             self.sim.step()
 
             # Check whether we caught the ball
@@ -125,24 +112,7 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
             catch_reward = 0.
 
         observation = self._get_obs()
-        return observation, catch_reward - control_cost, net_touched or ground_touched, {"catched": net_touched}
-
-    def _inv_kin_control(self, displacement):
-        # TODO check constraints
-
-        # Only do a one step IK as the time scale is pretty low and we control the robot in displacements anyway
-        jac_p = np.zeros((3, self.sim.model.nv))
-        jac_r = np.zeros((3, self.sim.model.nv))
-        mujoco_py.functions.mj_jacBody(self.model, self.sim.data, jac_p.reshape((-1,)), jac_r.reshape((-1,)),
-                                       self.net_body_id)
-        jac = np.concatenate((jac_p[:, 0:7], jac_r[:, 0:7]), axis=0)
-        jac_inv = np.linalg.solve((np.dot(jac, jac.T) + 1e-4 * np.eye(6)), jac).T
-        delta_x = self.sim.model.opt.timestep * displacement
-        delta_p = np.dot(jac_inv, delta_x)
-
-        self.des_pos += delta_p
-        torques = self.p_gains * (self.des_pos - self.sim.data.qpos[0:7]) - self.d_gains * self.sim.data.qvel[0:7]
-        self.sim.data.ctrl[:] = torques
+        return observation, catch_reward - control_cost, net_touched or ground_touched, {"success": net_touched}
 
     def _joint_position_control(self, actions):
         self.des_pos[1] += self.model.opt.timestep * actions[0]
@@ -180,14 +150,10 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
         noise_high = self._reset_noise_scale
 
         # Sample a random starting position for the ball
-        # init_limits = np.array([[3, 4], [-2, 2], [0.8, 1.8]])
         init_yz_limits = np.array([[-0.75, -0.65], [0.8, 1.8]])
         init_yz_ball_pos = np.random.uniform(init_yz_limits[:, 0], init_yz_limits[:, 1])
 
         # Now we compute the required initial velocity to reach the target position at this point
-        # new_mu = np.array([0., -0.7, 1.3])
-        # new_sigma = np.diag([1e-4, 0.045, 0.08])
-        # target_pos = np.random.multivariate_normal(new_mu, new_sigma)
         target_ball_pos = np.array([0.,
                                     -np.cos(self.context[0]) * self.context[1],
                                     0.75 + np.sin(self.context[0]) * self.context[1]])

@@ -83,7 +83,10 @@ class SACInterface(AgentInterface):
         return np.squeeze(self.learner.sess.run([self.learner.step_ops[6]], {self.learner.observations_ph: inputs}))
 
     def mean_policy_std(self, cb_args, cb_kwargs):
-        return cb_args[0]["infos_values"][4]
+        if "infos_values" in cb_args[0] and len(cb_args[0]["infos_values"]) > 0:
+            return cb_args[0]["infos_values"][4]
+        else:
+            return np.nan
 
 
 class TRPOInterface(AgentInterface):

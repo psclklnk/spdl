@@ -16,7 +16,7 @@ KL_DICT = {"point_mass": [8 * 10 ** -4, 2 * 10 ** 6], "point_mass_2d": [8 * 10 *
 METHODS = ["self_paced", "alp_gmm", "random", "default", "goal_gan"]
 LABEL_DICT = {"self_paced": r"SPDL", "alp_gmm": r"ALP-GMM", "random": r"Random", "default": r"Default",
               "goal_gan": r"GoalGAN"}
-COLOR_DICT = {"self_paced": "C0", "default": "C1", "random": "C2", "alp_gmm": "C3", "goal_gan": "C4"}
+COLOR_DICT = {"self_paced": "C0", "default": "C1", "random": "C2", "alp_gmm": "C3", "goal_gan": "C3"}
 LIMITS = {"point_mass": [-0.1, 10.1], "point_mass_2d": [-0.1, 10.1]}
 
 
