@@ -33,7 +33,7 @@ class ContextualPointMass(Env):
                             self.observation_space.high)
 
         crash = False
-        if state[2] >= 0 > new_state[2]:
+        if state[2] >= 0 > new_state[2] or state[2] <= 0 < new_state[2]:
             alpha = (0. - state[2]) / (new_state[2] - state[2])
             x_crit = alpha * new_state[0] + (1 - alpha) * state[0]
 

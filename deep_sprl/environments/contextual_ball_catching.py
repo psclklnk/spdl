@@ -51,13 +51,13 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
         self.ground_geom_id = self.sim.model._geom_name2id["ground"]
 
     def _set_action_space(self):
-        self._ctrl_cost_weight = 1e-2
         scale_array = 2. * np.array([1.985, 2.02, 2.9, 1.57, 2.7])
         self.action_space = spaces.Box(low=-scale_array, high=scale_array, dtype=np.float32)
         return self.action_space
 
     def control_cost(self, action):
-        control_cost = self._ctrl_cost_weight * np.linalg.norm(action)
+        # Maximum resulting control penalty is 0.5
+        control_cost = 5e-3 * np.sum(np.square(action))
         return control_cost
 
     def update_target_distribution_visualization(self, mu_target, sigma_target):
@@ -107,12 +107,12 @@ class ContextualBallCatching(MujocoEnv, utils.EzPickle):
         if net_touched:
             net_normal = np.reshape(self.sim.data.body_xmat[self.net_body_id, :], (3, 3))[2, :]
             norm_ball_vel = self.sim.data.qvel[7:10] / np.linalg.norm(self.sim.data.qvel[7:10])
-            catch_reward = 50. + 25 * np.dot(net_normal, norm_ball_vel)
+            catch_reward = 50. + 25 * (np.dot(net_normal, norm_ball_vel) ** 5)
         else:
             catch_reward = 0.
 
         observation = self._get_obs()
-        return observation, catch_reward - control_cost, net_touched or ground_touched, {"success": net_touched}
+        return observation, 0.275 - control_cost + catch_reward, net_touched or ground_touched, {"success": net_touched}
 
     def _joint_position_control(self, actions):
         self.des_pos[1] += self.model.opt.timestep * actions[0]

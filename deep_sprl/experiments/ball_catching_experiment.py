@@ -30,7 +30,7 @@ class BallCatchingExperiment(AbstractExperiment):
 
     ZETA = 0.7
     ALPHA_OFFSET = 0
-    OFFSET = 25
+    OFFSET = 35
 
     def __init__(self, base_log_dir, curriculum_name, parameters, seed):
         super().__init__(base_log_dir, curriculum_name, parameters, seed)
@@ -68,7 +68,8 @@ class BallCatchingExperiment(AbstractExperiment):
         data_path = os.path.join(dir_path, "data", "expert_data.npz")
         model = SAC(MlpPolicy, env, verbose=0, gamma=self.DISCOUNT_FACTOR, learning_rate=3e-4, buffer_size=100000,
                     learning_starts=1000, batch_size=512, train_freq=1, target_entropy="auto",
-                    policy_kwargs={"layers": [64, 64, 64], "act_fun": tf.tanh}, seed=self.seed)
+                    policy_kwargs={"layers": [64, 64, 64], "act_fun": tf.tanh}, seed=self.seed,
+                    n_cpu_tf_sess=1)
         model.pretrain(ExpertDataset(expert_path=data_path, verbose=0), n_epochs=25)
 
         timesteps = 2500000

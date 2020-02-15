@@ -10,6 +10,19 @@
         <default class="col">
             <geom type="mesh" contype="0" rgba="0.5 0.6 0.7 1"/>
         </default>
+        <default class="x_axis">
+            <geom contype="0" conaffinity="0" group="1" rgba="1 0 0 1"
+                  type="cylinder" size=".01 0.05" pos="0.05 0 0" euler="0 1.57 0"/>
+        </default>
+        <default class="y_axis">
+            <geom contype="0" conaffinity="0" group="1" rgba="0 1 0 1"
+                  type="cylinder" size=".01 0.05" pos="0 0.05 0" euler="1.57 0 0"/>
+        </default>
+        <default class="z_axis">
+            <geom contype="0" conaffinity="0" group="1" rgba="0 0 1 1"
+                  type="cylinder" size=".01 0.05" pos="0 0 0.05" euler="0 0 0"/>
+        </default>
+
     </default>
     <asset>
         <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="512"
@@ -141,6 +154,9 @@
                                             <inertial pos="0 0 0" mass="0.11"/>
                                             <geom name="net_geom" conaffinity="1" contype="1"
                                                   type="cylinder" size="0.06 0.01" solimp="0. 0. 0.001 0.5 2"/>
+                                            <geom class="x_axis"/>
+                                            <geom class="y_axis"/>
+                                            <geom class="z_axis"/>
                                         </body>
                                     </body>
                                 </body>

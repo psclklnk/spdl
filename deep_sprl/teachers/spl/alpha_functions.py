@@ -20,5 +20,6 @@ class PercentageAlphaFunction(AlphaFunction):
             alpha = 0.
         else:
             kl_divergence = torch.clamp(kl_divergence, min=1e-10)
+            average_reward = 0. if average_reward < 0. else average_reward
             alpha = torch.clamp(self.percentage * average_reward / kl_divergence, max=1e5)
         return alpha

@@ -70,7 +70,7 @@ class PointMass2DExperiment(AbstractExperiment):
         env, vec_env = self.create_environment(evaluation=False)
         model = TRPO(MlpPolicy, vec_env, gamma=self.DISCOUNT_FACTOR, max_kl=0.004, timesteps_per_batch=steps_per_iter,
                      lam=0.99, policy_kwargs=dict(net_arch=[dict(vf=[21], pi=[21])]), vf_stepsize=0.23921693516009684,
-                     seed=self.seed)
+                     seed=self.seed, n_cpu_tf_sess=1)
 
         if isinstance(env.teacher, SelfPacedTeacher):
             sp_teacher = env.teacher
