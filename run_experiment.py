@@ -1,7 +1,6 @@
 import argparse
 import deep_sprl.environments
 
-
 def main():
     parser = argparse.ArgumentParser("Self-Paced Learning experiment runner")
     parser.add_argument("--base_log_dir", type=str, default="logs")
@@ -12,6 +11,10 @@ def main():
     parser.add_argument("--seed", type=int, default=1)
 
     args = parser.parse_args()
+
+    if args.type == "self_paced":
+        import torch
+        torch.set_num_threads(4)
 
     if args.env == "point_mass":
         from deep_sprl.experiments import PointMassExperiment
