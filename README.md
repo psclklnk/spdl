@@ -17,3 +17,10 @@ There exist two convenience scripts for running the experiments: **run_experimen
 ```bash
 ./run_all_experiments.sh 1
 ```
+
+After running the experiments for the desired number of seeds, the results can be visualized using the following command
+```bash
+python visualize_results.py --env point_mass
+python visualize_results.py --env point_mass_2d
+python visualize_results.py --env ball_catching
+```
