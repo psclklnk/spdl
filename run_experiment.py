@@ -14,7 +14,7 @@ def main():
 
     if args.type == "self_paced":
         import torch
-        torch.set_num_threads(4)
+        torch.set_num_threads(1)
 
     if args.env == "point_mass":
         from deep_sprl.experiments import PointMassExperiment
