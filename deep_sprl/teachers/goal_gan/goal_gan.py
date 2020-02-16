@@ -8,7 +8,13 @@ class GoalGAN(AbstractTeacher):
 
     def __init__(self, mins, maxs, state_noise_level, success_distance_threshold, update_size, n_rollouts=2,
                  goid_lb=0.25, goid_ub=0.75, p_old=0.2, pretrain_samples=None):
-        self.tf_session = tf.Session()
+        tf_config = tf.ConfigProto(
+                allow_soft_placement=True,
+                inter_op_parallelism_threads=1,
+                intra_op_parallelism_threads=1)
+        # Prevent tensorflow from taking all the gpu memory
+        tf_config.gpu_options.allow_growth = True
+        self.tf_session = tf.Session(config=tf_config)
         self.gan = StateGAN(
             state_size=len(mins),
             evaluater_size=1,
