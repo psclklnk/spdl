@@ -12,6 +12,7 @@ There exists a convenience script for running the experiments: **run_experiments
 ```bash
 ./run_all_experiments.sh 1
 ```
+The scripts are designed to only run on one CPU core, such that they can be parallelized even on a single computer. Please note that code for running the Ant environment is not contained, since the Isaac Gym simulator used for simulation is currently under close access.
 
 After running the experiments for the desired number of seeds, the results can be visualized using the following command
 ```bash
