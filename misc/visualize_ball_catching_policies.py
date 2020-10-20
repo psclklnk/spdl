@@ -2,6 +2,7 @@ import os
 import sys
 import argparse
 from gym.wrappers import Monitor
+import numpy as np
 
 sys.path.append(os.path.realpath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -13,9 +14,10 @@ def main():
     parser.add_argument("--base_log_dir", type=str, default="logs")
     parser.add_argument("--type", type=str, default="default",
                         choices=["default", "random", "self_paced", "goal_gan", "alp_gmm"])
-    parser.add_argument("--learner", type=str, required=True, choices=["trpo", "ppo", "sac"])
+    parser.add_argument("--learner", type=str, default="ppo", choices=["trpo", "ppo", "sac"])
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--video_dir", type=str, default="video")
+    parser.add_argument("--n_runs", type=int, default=1)
 
     args = parser.parse_args()
 
@@ -23,12 +25,14 @@ def main():
                              "seed-" + str(args.seed))
     os.makedirs(video_dir, exist_ok=True)
 
-    exp = BallCatchingExperiment(args.base_log_dir, args.type, args.learner, {}, args.seed)
+    exp = BallCatchingExperiment(args.base_log_dir, args.type, args.learner,
+                                 {"VISUALIZE": True}, args.seed)
     log_dir = os.path.join(os.path.dirname(__file__), "..", exp.get_log_dir(), "iteration-" + str(495))
     monitor = Monitor(exp.eval_env, video_dir, force=True, video_callable=lambda episode_id: True)
 
     model = exp.learner.load_for_evaluation(os.path.join(log_dir, "model"), exp.eval_env)
-    for i in range(0, 10):
+    for i in range(0, args.n_runs):
+        np.random.seed(i)
         obs = monitor.reset()
         done = False
         while not done:

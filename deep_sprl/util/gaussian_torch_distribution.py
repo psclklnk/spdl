@@ -270,12 +270,12 @@ class TorchDistribution(AbstractDistribution, ABC):
 
 class GaussianTorchDistribution(TorchDistribution):
 
-    def __init__(self, mu, chol_flat, use_cuda):
+    def __init__(self, mu, chol_flat, use_cuda, dtype=torch.float32):
         super().__init__(use_cuda)
         self._dim = mu.shape[0]
 
-        self._mu = nn.Parameter(torch.as_tensor(mu, dtype=torch.float32), requires_grad=True)
-        self._chol_flat = nn.Parameter(torch.as_tensor(chol_flat, dtype=torch.float32), requires_grad=True)
+        self._mu = nn.Parameter(torch.as_tensor(mu, dtype=dtype), requires_grad=True)
+        self._chol_flat = nn.Parameter(torch.as_tensor(chol_flat, dtype=dtype), requires_grad=True)
 
         self.distribution_t = MultivariateNormal(self._mu, scale_tril=self.to_tril_matrix(self._chol_flat, self._dim))
 
@@ -291,7 +291,7 @@ class GaussianTorchDistribution(TorchDistribution):
             chol = np.zeros((dim, dim))
             exp_fun = np.exp
         else:
-            chol = torch.zeros((dim, dim))
+            chol = torch.zeros((dim, dim), dtype=chol_flat.dtype)
             exp_fun = torch.exp
 
         d1, d2 = np.diag_indices(dim)
@@ -332,6 +332,12 @@ class GaussianTorchDistribution(TorchDistribution):
         set_weights([self._chol_flat], weights[self._dim:], self._use_cuda)
         # This is important - otherwise the changes will not be reflected!
         self.distribution_t = MultivariateNormal(self._mu, scale_tril=self.to_tril_matrix(self._chol_flat, self._dim))
+
+    @staticmethod
+    def from_weights(dim, weights, use_cuda=False, dtype=torch.float32):
+        mu = weights[0: dim]
+        chol_flat = weights[dim:]
+        return GaussianTorchDistribution(mu, chol_flat, use_cuda=use_cuda, dtype=dtype)
 
     def get_weights(self):
         mu_weights = get_weights([self._mu])

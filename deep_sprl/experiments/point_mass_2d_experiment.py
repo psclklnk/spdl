@@ -30,8 +30,8 @@ class PointMass2DExperiment(AbstractExperiment):
     KL_THRESHOLD = 8000.
     MAX_KL = 0.05
 
-    ZETA = {Learner.TRPO: 1.6, Learner.PPO: 1.6, Learner.SAC: 1.8}
-    ALPHA_OFFSET = {Learner.TRPO: 70, Learner.PPO: 70, Learner.SAC: 50}
+    ZETA = {Learner.TRPO: 1.6, Learner.PPO: 1.4, Learner.SAC: 1.2}
+    ALPHA_OFFSET = {Learner.TRPO: 70, Learner.PPO: 10, Learner.SAC: 50}
     OFFSET = {Learner.TRPO: 5, Learner.PPO: 5, Learner.SAC: 5}
 
     STEPS_PER_ITER = 2048
@@ -69,12 +69,7 @@ class PointMass2DExperiment(AbstractExperiment):
                               p_old=self.GG_P_OLD[self.learner], pretrain_samples=samples)
             env = GoalGANWrapper(env, teacher, self.DISCOUNT_FACTOR, context_visible=True)
         elif self.curriculum.self_paced():
-            alpha_fn = PercentageAlphaFunction(self.ALPHA_OFFSET[self.learner], self.ZETA[self.learner])
-            bounds = (self.LOWER_CONTEXT_BOUNDS.copy(), self.UPPER_CONTEXT_BOUNDS.copy())
-            teacher = SelfPacedTeacher(self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(), self.INITIAL_MEAN.copy(),
-                                       self.INITIAL_VARIANCE.copy(), bounds, alpha_fn, max_kl=self.MAX_KL,
-                                       std_lower_bound=self.STD_LOWER_BOUND.copy(), kl_threshold=self.KL_THRESHOLD,
-                                       use_avg_performance=True)
+            teacher = self.create_self_paced_teacher()
             env = SelfPacedWrapper(env, teacher, self.DISCOUNT_FACTOR, context_visible=True)
         elif self.curriculum.random():
             teacher = UniformSampler(self.LOWER_CONTEXT_BOUNDS.copy(), self.UPPER_CONTEXT_BOUNDS.copy())
@@ -89,13 +84,16 @@ class PointMass2DExperiment(AbstractExperiment):
                                 policy_kwargs=dict(layers=[21], act_fun=tf.tanh)),
                     trpo=dict(max_kl=0.004, timesteps_per_batch=self.STEPS_PER_ITER, lam=self.LAM,
                               vf_stepsize=0.23921693516009684),
-                    ppo=dict(n_steps=self.STEPS_PER_ITER, noptepochs=4, nminibatches=4, lam=self.LAM,
+                    ppo=dict(n_steps=self.STEPS_PER_ITER, noptepochs=8, nminibatches=32, lam=self.LAM,
                              max_grad_norm=None, vf_coef=1.0, cliprange_vf=-1, ent_coef=0.),
                     sac=dict(learning_rate=3e-4, buffer_size=10000, learning_starts=500, batch_size=64,
                              train_freq=1, target_entropy="auto"))
 
     def create_experiment(self):
-        timesteps = 1000 * self.STEPS_PER_ITER
+        if self.learner.sac():
+            timesteps = 400 * self.STEPS_PER_ITER
+        else:
+            timesteps = 1000 * self.STEPS_PER_ITER
 
         env, vec_env = self.create_environment(evaluation=False)
         model, interface = self.learner.create_learner(vec_env, self.create_learner_params())
@@ -111,8 +109,8 @@ class PointMass2DExperiment(AbstractExperiment):
         return model, timesteps, callback_params
 
     def create_self_paced_teacher(self):
-        alpha_fn = PercentageAlphaFunction(self.ALPHA_OFFSET[self.learner], self.ZETA[self.learner])
         bounds = (self.LOWER_CONTEXT_BOUNDS.copy(), self.UPPER_CONTEXT_BOUNDS.copy())
+        alpha_fn = PercentageAlphaFunction(self.ALPHA_OFFSET[self.learner], self.ZETA[self.learner])
         return SelfPacedTeacher(self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(), self.INITIAL_MEAN.copy(),
                                 self.INITIAL_VARIANCE.copy(), bounds, alpha_fn, max_kl=self.MAX_KL,
                                 std_lower_bound=self.STD_LOWER_BOUND, kl_threshold=self.KL_THRESHOLD,

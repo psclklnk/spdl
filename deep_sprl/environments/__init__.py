@@ -6,6 +6,12 @@ try:
         max_episode_steps=200,
         entry_point='deep_sprl.environments.contextual_ball_catching:ContextualBallCatching'
     )
+
+    register(
+        id='ContextualBallCatchingVis-v1',
+        max_episode_steps=500,
+        entry_point='deep_sprl.environments.contextual_ball_catching_vis:ContextualBallCatching'
+    )
 except ModuleNotFoundError:
     pass
 

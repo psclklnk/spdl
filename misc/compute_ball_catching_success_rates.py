@@ -14,29 +14,32 @@ rc('font', **{'family': 'sans-serif', 'sans-serif': ['Helvetica']})
 rc('text', usetex=True)
 FONT_SIZE = 7
 
-labels = {"default": "Default", "goal_gan": "Goal GAN", "alp_gmm": "ALP-GMM", "self_paced": "SPDL",
+labels = {"default": "Default", "goal_gan": "Goal GAN", "alp_gmm*": "ALP-GMM", "self_paced": "SPDL",
           "self_paced*": "SPDL*", "goal_gan*": "GoalGAN*", "default*": "Default*"}
-colors = {"self_paced": "C0", "default": "C1", "random": "C2", "alp_gmm": "C3", "goal_gan": "C4", "self_paced*": "C5",
-          "goal_gan*": "C8", "default*": "C7"}
-priorities = {"self_paced": 5, "default": 0, "alp_gmm": 4, "goal_gan": 2, "self_paced*": 6,
-              "goal_gan*": 3, "default*": 1}
+colors = {"self_paced": "C0", "default*": "C1", "alp_gmm*": "C3", "goal_gan": "C4", "self_paced*": "C5",
+          "goal_gan*": "C8", "default": "C7"}
+priorities = {"self_paced*": 5, "default": 0, "alp_gmm*": 4, "goal_gan*": 2, "self_paced": 6,
+              "goal_gan": 3, "default*": 1}
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--base_log_dir", type=str, default="logs")
     parser.add_argument("--learner", type=str, required=True, choices=["trpo", "ppo", "sac"])
-    parser.add_argument("--save_dir", type=str, default=None)
+    parser.add_argument("--picture_dir", type=str, default="pictures")
+    parser.add_argument("--save_plot", action="store_true")
     args = parser.parse_args()
 
     # We just use this to create the evaluation environment
-    exps = [BallCatchingExperiment(args.base_log_dir, "default", args.learner, {}, 1),
-            BallCatchingExperiment(args.base_log_dir, "default", args.learner, {"INIT_CONTEXT": False}, 1),
-            BallCatchingExperiment(args.base_log_dir, "default", args.learner, {"INIT_POLICY": False}, 1)]
-    suffixes = ["", "*", "*"]
+    exps = [lambda: BallCatchingExperiment(args.base_log_dir, "default", args.learner, {}, 1),
+            lambda: BallCatchingExperiment(args.base_log_dir, "default", args.learner, {"INIT_CONTEXT": False}, 1),
+            lambda: BallCatchingExperiment(args.base_log_dir, "default", args.learner, {"INIT_POLICY": False}, 1)]
+    suffixes = ["*", "", ""]
+    picture_base = os.path.join(os.path.dirname(__file__), "..", args.picture_dir)
     log_dir = os.path.join(os.path.dirname(__file__), "..", args.base_log_dir, "ball_catching")
     types = [d for d in os.listdir(log_dir) if os.path.isdir(os.path.join(log_dir, d))]
     for exp, suffix in zip(exps, suffixes):
+        exp = exp()
         for cur_type in types:
             exp.curriculum = CurriculumType.from_string(cur_type)
             type_log_dir = os.path.join(os.path.dirname(__file__), "..", os.path.dirname(exp.get_log_dir()))
@@ -70,10 +73,12 @@ def main():
 
     data_dict = {}
     for exp, suffix in zip(exps, suffixes):
+        exp = exp()
         for cur_type in types:
             exp.curriculum = CurriculumType.from_string(cur_type)
             type_log_dir = os.path.join(os.path.dirname(__file__), "..", os.path.dirname(exp.get_log_dir()))
             if os.path.exists(type_log_dir):
+                print(cur_type + suffix)
                 seeds = [int(d.split("-")[1]) for d in os.listdir(type_log_dir) if
                          os.path.isdir(os.path.join(type_log_dir, d))]
                 cur_successes = []
@@ -81,6 +86,7 @@ def main():
                     seed_log_dir = os.path.join(type_log_dir, "seed-" + str(seed))
                     with open(os.path.join(seed_log_dir, "catch_stats.pkl"), "rb") as f:
                         cur_successes.append(pickle.load(f))
+                        print("\tSeed %d: %.2e" % (seed, cur_successes[-1]))
                 data_dict[cur_type + suffix] = (np.mean(np.squeeze(cur_successes)),
                                                 np.std(np.squeeze(cur_successes)) / np.sqrt(len(cur_successes)))
 
@@ -108,11 +114,12 @@ def main():
     plt.ylim([plt.ylim()[0], 0.9])
 
     plt.tight_layout()
-    if args.save_dir is None:
-        plt.show()
-    else:
-        plt.savefig(os.path.join(args.save_dir, "ball_catching_stats_%s.pdf" % args.learner), bbox_inches='tight',
+    if args.save_plot:
+        os.makedirs(picture_base, exist_ok=True)
+        plt.savefig(os.path.join(picture_base, "ball_catching_stats_%s.pdf" % args.learner), bbox_inches='tight',
                     pad_inches=0)
+    else:
+        plt.show()
 
 
 if __name__ == "__main__":

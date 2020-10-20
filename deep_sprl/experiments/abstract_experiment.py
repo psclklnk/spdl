@@ -387,7 +387,7 @@ class AbstractExperiment(ABC):
     def train(self):
         model, timesteps, callback_params = self.create_experiment()
         log_directory = self.get_log_dir()
-        if os.path.exists(log_directory):
+        if os.path.exists(os.path.join(log_directory, "performance.pkl")):
             print("Log directory already exists! Going directly to evaluation")
         else:
             callback = ExperimentCallback(log_directory=log_directory, **callback_params)

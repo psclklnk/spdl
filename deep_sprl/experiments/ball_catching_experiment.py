@@ -29,8 +29,9 @@ class DummyBallCatchingExperiment(AbstractExperiment):
     DISCOUNT_FACTOR = 0.995
     MAX_KL = 0.05
 
-    ZETA = {Learner.TRPO: 0.4, Learner.PPO: 0.5, Learner.SAC: 0.7}
-    ALPHA_OFFSET = {Learner.TRPO: 0, Learner.PPO: 0, Learner.SAC: 0}
+    # These values are set in the constructor as they depend on the experiment type
+    ZETA = None
+    ALPHA_OFFSET = None
     OFFSET = {Learner.TRPO: 5, Learner.PPO: 5, Learner.SAC: 5}
 
     STEPS_PER_ITER = 5000
@@ -45,6 +46,11 @@ class DummyBallCatchingExperiment(AbstractExperiment):
     GG_P_OLD = {Learner.TRPO: 0.3, Learner.PPO: 0.3, Learner.SAC: 0.3}
 
     def __init__(self, base_log_dir, curriculum_name, learner_name, parameters, seed):
+        self.visualize = False
+        if "VISUALIZE" in parameters:
+            self.visualize = parameters["VISUALIZE"] is True
+            del parameters["VISUALIZE"]
+
         super().__init__(base_log_dir, curriculum_name, learner_name, parameters, seed)
 
     def create_experiment(self):
@@ -76,13 +82,20 @@ class BallCatchingExperiment(DummyBallCatchingExperiment):
             self.init_policy = True
 
         if not self.init_context:
-            self.ALPHA_OFFSET = {Learner.TRPO: 50, Learner.PPO: 50, Learner.SAC: 50}
+            self.ALPHA_OFFSET = {Learner.TRPO: 70, Learner.PPO: 50, Learner.SAC: 60}
+            self.ZETA = {Learner.TRPO: 0.4, Learner.PPO: 0.45, Learner.SAC: 0.6}
+        else:
+            self.ZETA = {Learner.TRPO: 0.425, Learner.PPO: 0.45, Learner.SAC: 0.6}
+            self.ALPHA_OFFSET = {Learner.TRPO: 0, Learner.PPO: 0, Learner.SAC: 0}
 
         super().__init__(base_log_dir, curriculum_name, learner_name, parameters, seed)
         self.eval_env = self.create_environment(evaluate=True)
 
     def create_environment(self, evaluate=False):
-        env = gym.make("ContextualBallCatching-v1")
+        if self.visualize:
+            env = gym.make("ContextualBallCatchingVis-v1")
+        else:
+            env = gym.make("ContextualBallCatching-v1")
         if self.curriculum.default() or evaluate:
             teacher = GaussianSampler(self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(),
                                       (self.LOWER_CONTEXT_BOUNDS.copy(), self.UPPER_CONTEXT_BOUNDS.copy()))
@@ -103,16 +116,7 @@ class BallCatchingExperiment(DummyBallCatchingExperiment):
                               p_old=self.GG_P_OLD[self.learner], pretrain_samples=samples)
             env = GoalGANWrapper(env, teacher, self.DISCOUNT_FACTOR, context_visible=False)
         elif self.curriculum.self_paced():
-            alpha_fn = PercentageAlphaFunction(self.ALPHA_OFFSET[self.learner], self.ZETA[self.learner])
-            bounds = (self.LOWER_CONTEXT_BOUNDS.copy(), self.UPPER_CONTEXT_BOUNDS.copy())
-            if self.init_context:
-                teacher = SelfPacedTeacher(self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(),
-                                           self.INITIAL_MEAN.copy(), self.INITIAL_VARIANCE.copy(), bounds, alpha_fn,
-                                           max_kl=self.MAX_KL, use_avg_performance=True)
-            else:
-                teacher = SelfPacedTeacher(self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(),
-                                           self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(), bounds, alpha_fn,
-                                           max_kl=self.MAX_KL, use_avg_performance=True)
+            teacher = self.create_self_paced_teacher()
             env = SelfPacedWrapper(env, teacher, self.DISCOUNT_FACTOR, context_visible=False,
                                    max_context_buffer_size=100, reset_contexts=False)
         else:
@@ -155,11 +159,18 @@ class BallCatchingExperiment(DummyBallCatchingExperiment):
         return model, timesteps, callback_params
 
     def create_self_paced_teacher(self):
-        alpha_fn = PercentageAlphaFunction(self.ALPHA_OFFSET[self.learner], self.ZETA[self.learner])
         bounds = (self.LOWER_CONTEXT_BOUNDS.copy(), self.UPPER_CONTEXT_BOUNDS.copy())
-        return SelfPacedTeacher(self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(), self.INITIAL_MEAN.copy(),
-                                self.INITIAL_VARIANCE.copy(), bounds, alpha_fn, max_kl=self.MAX_KL,
-                                use_avg_performance=True)
+
+        if self.init_context:
+            init_mean = self.INITIAL_MEAN.copy()
+            init_var = self.INITIAL_VARIANCE.copy()
+        else:
+            init_mean = self.TARGET_MEAN.copy()
+            init_var = self.TARGET_VARIANCE.copy()
+
+        alpha_fn = PercentageAlphaFunction(self.ALPHA_OFFSET[self.learner], self.ZETA[self.learner])
+        return SelfPacedTeacher(self.TARGET_MEAN.copy(), self.TARGET_VARIANCE.copy(), init_mean, init_var,
+                                bounds, alpha_fn, max_kl=self.MAX_KL, use_avg_performance=True)
 
     def evaluate_learner(self, path):
         model_load_path = os.path.join(path, "model")

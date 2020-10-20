@@ -70,8 +70,8 @@ def zero_grad(parameters):
 
     for p in parameters:
         if p.grad is not None:
-           p.grad.detach_()
-           p.grad.zero_()
+            p.grad.detach_()
+            p.grad.zero_()
 
 
 def get_gradient(params):
@@ -93,7 +93,7 @@ def get_gradient(params):
     return torch.cat(views, 0)
 
 
-def to_float_tensor(x, use_cuda=False):
+def to_float_tensor(x, use_cuda=False, dtype=torch.float):
     """
     Function used to convert a numpy array to a float torch tensor.
 
@@ -105,5 +105,5 @@ def to_float_tensor(x, use_cuda=False):
         A float tensor build from the values contained in the input array.
 
     """
-    x = torch.tensor(x, dtype=torch.float)
+    x = torch.tensor(x, dtype=dtype)
     return x.cuda() if use_cuda else x

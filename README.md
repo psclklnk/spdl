@@ -6,23 +6,24 @@ It is easiest to setup a virtual or conda environment in order to isolate the pa
 ```bash
 pip install -r requirements.txt
 ```
-Please not that this also installs the MuJoCo simulation library. For this to work, you need to have set up MuJoCo according to [this guide](https://github.com/openai/mujoco-py).
 
-There exists a convenience script for running the experiments: **run_experiments.sh**. It will run all combinations of CL and RL algorithms in all environments. The script takes one argument that specifies the seed with which the experiments will be run. So in order to run all experiments with seed 1, you need to execute
-```bash
-./run_all_experiments.sh 1
+This will install all packages required to run the point mass experiments. If you furthermore want to run the ball catching experiment, you need to also execute
 ```
-The scripts are designed to only run on one CPU core, such that they can be parallelized even on a single computer. Please note that code for running the Ant environment is not contained, since the Isaac Gym simulator used for simulation is currently under close access.
+pip install -r requirements_ext.txt
+```
+This will install a wrapper for the MuJoCo simulation library. For this to work, you need to have set up MuJoCo according to [this guide](https://github.com/openai/mujoco-py).
+
+There exist a convenience script for running the experiments: **run_experiments.sh** . The script takes one argument that specifies the seed with which the experiments will be run. So in order to run all experiments with seed 1, you need to execute
+```bash
+./run_experiments.sh 1
+```
 
 After running the experiments for the desired number of seeds, the results can be visualized using the following command
 ```bash
-python visualize_results.py --env point_mass --learner trpo
-python visualize_results.py --env point_mass --learner ppo
-python visualize_results.py --env point_mass --learner sac
-python visualize_results.py --env point_mass_2d --learner trpo
-python visualize_results.py --env point_mass_2d --learner ppo
-python visualize_results.py --env point_mass_2d --learner sac
-python visualize_results.py --env ball_catching --learner trpo
-python visualize_results.py --env ball_catching --learner ppo
-python visualize_results.py --env ball_catching --learner sac
+python visualize_results.py --env point_mass point_mass_2d --learner ppo ppo --dist_vis point_mass_2d
+python visualize_results.py --env point_mass point_mass_2d --learner trpo trpo --dist_vis point_mass_2d
+python visualize_results.py --env point_mass point_mass_2d --learner sac sac --dist_vis point_mass_2d
+python visualize_results.py --env ball_catching --learner ppo --dist_vis ball_catching
+python visualize_results.py --env ball_catching --learner trpo --dist_vis ball_catching
+python visualize_results.py --env ball_catching --learner sac --dist_vis ball_catching
 ```

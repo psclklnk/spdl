@@ -1,0 +1,310 @@
+<mujoco model="wam(v1.31)">
+    <compiler angle="radian" meshdir="meshes/"/>
+    <option timestep="0.002" integrator="Euler"/>
+    <size njmax="500" nconmax="100"/>
+    <visual>
+        <rgba fog="1. 1. 1. 1."/>
+        <map fogstart="0.7" fogend="3"/>
+        <quality shadowsize="4096"/>
+    </visual>
+    <statistic extent="6"/>
+
+    <default class="main">
+        <joint limited="true" frictionloss="0.001"/>
+        <default class="viz">
+            <geom type="mesh" contype="0" conaffinity="0" group="2" rgba="0.2 0.2 0.2 1"/>
+        </default>
+        <default class="col">
+            <geom type="mesh" contype="0" group="3" rgba="0.5 0.6 0.7 1"/>
+        </default>
+        <default class="x_axis">
+            <geom contype="0" conaffinity="0" group="1" rgba="1 0 0 1"
+                  type="cylinder" size=".01 0.05" pos="0.05 0 0" euler="0 1.57 0"/>
+        </default>
+        <default class="y_axis">
+            <geom contype="0" conaffinity="0" group="1" rgba="0 1 0 1"
+                  type="cylinder" size=".01 0.05" pos="0 0.05 0" euler="1.57 0 0"/>
+        </default>
+        <default class="z_axis">
+            <geom contype="0" conaffinity="0" group="1" rgba="0 0 1 1"
+                  type="cylinder" size=".01 0.05" pos="0 0 0.05" euler="0 0 0"/>
+        </default>
+
+    </default>
+    <asset>
+        <texture name="texplane" type="2d" builtin="checker" rgb1=".2 .3 .4" rgb2=".1 0.15 0.2" width="2048"
+                 height="2048" mark="cross" markrgb=".8 .8 .8"/>
+        <texture name="sky" type="skybox" builtin="flat" rgb2="1. 1. 1." height="100" width="100"/>
+        <material name="matplane" reflectance="0.3" texture="texplane" texrepeat="1 1" texuniform="true"/>
+
+        <mesh name="base_link_fine" file="base_link_fine.stl"/>
+        <mesh name="base_link_convex" file="base_link_convex.stl"/>
+        <mesh name="shoulder_link_fine" file="shoulder_link_fine.stl"/>
+        <mesh name="shoulder_link_convex_decomposition_p1" file="shoulder_link_convex_decomposition_p1.stl"/>
+        <mesh name="shoulder_link_convex_decomposition_p2" file="shoulder_link_convex_decomposition_p2.stl"/>
+        <mesh name="shoulder_link_convex_decomposition_p3" file="shoulder_link_convex_decomposition_p3.stl"/>
+        <mesh name="shoulder_pitch_link_fine" file="shoulder_pitch_link_fine.stl"/>
+        <mesh name="shoulder_pitch_link_convex" file="shoulder_pitch_link_convex.stl"/>
+        <mesh name="upper_arm_link_fine" file="upper_arm_link_fine.stl"/>
+        <mesh name="upper_arm_link_convex_decomposition_p1" file="upper_arm_link_convex_decomposition_p1.stl"/>
+        <mesh name="upper_arm_link_convex_decomposition_p2" file="upper_arm_link_convex_decomposition_p2.stl"/>
+        <mesh name="elbow_link_fine" file="elbow_link_fine.stl"/>
+        <mesh name="elbow_link_convex" file="elbow_link_convex.stl"/>
+        <mesh name="forearm_link_fine" file="forearm_link_fine.stl"/>
+        <mesh name="forearm_link_convex_decomposition_p1" file="forearm_link_convex_decomposition_p1.stl"/>
+        <mesh name="forearm_link_convex_decomposition_p2" file="forearm_link_convex_decomposition_p2.stl"/>
+        <mesh name="wrist_yaw_link_fine" file="wrist_yaw_link_fine.stl"/>
+        <mesh name="wrist_yaw_link_convex_decomposition_p1" file="wrist_yaw_link_convex_decomposition_p1.stl"/>
+        <mesh name="wrist_yaw_link_convex_decomposition_p2" file="wrist_yaw_link_convex_decomposition_p2.stl"/>
+        <mesh name="wrist_pitch_link_fine" file="wrist_pitch_link_fine.stl"/>
+        <mesh name="wrist_pitch_link_convex_decomposition_p1" file="wrist_pitch_link_convex_decomposition_p1.stl"/>
+        <mesh name="wrist_pitch_link_convex_decomposition_p2" file="wrist_pitch_link_convex_decomposition_p2.stl"/>
+        <mesh name="wrist_pitch_link_convex_decomposition_p3" file="wrist_pitch_link_convex_decomposition_p3.stl"/>
+        <mesh name="wrist_palm_link_fine" file="wrist_palm_link_fine.stl"/>
+        <mesh name="wrist_palm_link_convex" file="wrist_palm_link_convex.stl"/>
+    </asset>
+
+    <worldbody>
+        <!--<body mocap="true" name="net_mocap">
+            <geom type="sphere" size="0.05"/>
+        </body>-->
+
+        <geom name="ground" pos="0 0 0" size="100 100 .25" type="plane" material="matplane" conaffinity="3" condim="3"
+              solref="-16000 -200"/>
+        <!--<light directional="true" ambient=".1 .1 .1" diffuse=".7 .7 .7" specular="0.9 0.9 0.9" pos="0 0 5"
+               dir="0 0 -1" castshadow="false"/>-->
+<!--        <light mode="targetbodycom" target="wam/base_link" directional="false" ambient=".5 .5 .5"  diffuse=".2 .2 .2"-->
+<!--               specular="0.3 0.3 0.3"  pos="40.0 0 10.0" castshadow="false"/>-->
+<!--        <light mode="targetbodycom" target="wam/base_link" directional="false" ambient=".5 .5 .5"  diffuse=".2 .2 .2"-->
+<!--               specular="0.8 0.8 0.8"  pos="0.0 0 10.0" dir="0 0 -1" castshadow="false"/>-->
+        <!--<light mode="targetbodycom" target="ball" directional="false" diffuse="2 2 2" specular="0.3 0.3 0.3"
+               pos="0 0 4.0" dir="0 0 -1"/-->
+        <light directional="true" diffuse=".2 .2 .2" specular="0 0 0" pos="0 0 5" dir="0 0 -1" castshadow="false"/>
+
+        <light mode="fixed" directional="false" diffuse="2 2 2" specular="0.3 0.3 0.3" pos="-2.0 0 5.0" dir="0.5 0 -1"/>
+        <light mode="fixed" directional="false" diffuse="2 2 2" specular="0.3 0.3 0.3" pos="2.0 0 5.0" dir="0 0 -1"/>
+        <light mode="fixed" directional="false" diffuse="2 2 2" specular="0.3 0.3 0.3" pos="5.0 0 5.0" dir="0 0 -1"/>
+        <light mode="fixed" directional="false" diffuse="2 2 2" specular="0.3 0.3 0.3" pos="8.0 0 5.0" dir="0 0 -1"/>
+
+
+        <body name="wam/base_link" pos="0 0 0.6">
+            <inertial pos="6.93764e-06 0.0542887 0.076438" quat="0.496481 0.503509 -0.503703 0.496255" mass="27.5544"
+                      diaginertia="0.432537 0.318732 0.219528"/>
+            <geom class="viz" quat="0.707107 0 0 -0.707107" mesh="base_link_fine"/>
+            <geom class="col" quat="0.707107 0 0 -0.707107" mesh="base_link_convex"/>
+
+            <body name="wam/shoulder_yaw_link" pos="0 0 0.16" quat="0.707107 0 0 -0.707107">
+                <inertial pos="-0.00443422 -0.00066489 -0.12189" quat="0.999995 0.000984795 0.00270132 0.00136071"
+                          mass="10.7677" diaginertia="0.507411 0.462983 0.113271"/>
+                <joint name="wam/base_yaw_joint" pos="0 0 0" axis="0 0 1" range="-2.6 2.6"/>
+                <geom class="viz" pos="0 0 0.186" mesh="shoulder_link_fine"/>
+                <geom class="col" pos="0 0 0.186" mesh="shoulder_link_convex_decomposition_p1"/>
+                <geom class="col" pos="0 0 0.186" mesh="shoulder_link_convex_decomposition_p2"/>
+                <geom class="col" pos="0 0 0.186" mesh="shoulder_link_convex_decomposition_p3"/>
+
+                <body name="wam/shoulder_pitch_link" pos="0 0 0.184" quat="0.707107 -0.707107 0 0">
+                    <inertial pos="-0.00236983 -0.0154211 0.0310561" quat="0.961781 -0.272983 0.0167269 0.0133385"
+                              mass="3.87494" diaginertia="0.0214207 0.0167101 0.0126465"/>
+                    <joint name="wam/shoulder_pitch_joint" pos="0 0 0" axis="0 0 1" range="-1.985 1.985"/>
+                    <geom class="viz" mesh="shoulder_pitch_link_fine"/>
+                    <geom class="col" mesh="shoulder_pitch_link_convex"/>
+
+                    <body name="wam/upper_arm_link" pos="0 -0.505 0" quat="0.707107 0.707107 0 0">
+                        <inertial pos="-0.0382586 3.309e-05 -0.207508" quat="0.705455 0.0381914 0.0383402 0.706686"
+                                  mass="1.80228" diaginertia="0.0665697 0.0634285 0.00622701"/>
+                        <joint name="wam/shoulder_yaw_joint" pos="0 0 0" axis="0 0 1" range="-2.8 2.8"/>
+                        <geom class="viz" pos="0 0 -0.505" mesh="upper_arm_link_fine" rgba="0.2 0.2 0.2 1."/>
+                        <geom class="viz" type="cylinder" size=".045 0.173" pos="0 0 -0.22" euler="0 0 0" rgba=".4 .4 .4 1"/>
+
+                        <geom class="col" pos="0 0 -0.505" mesh="upper_arm_link_convex_decomposition_p1"/>
+                        <geom class="col" pos="0 0 -0.505" mesh="upper_arm_link_convex_decomposition_p2"/>
+
+                        <body name="wam/forearm_link" pos="0.045 0 0.045" quat="0.707107 -0.707107 0 0">
+                            <inertial pos="0.00498512 -0.132717 -0.00022942" quat="0.546303 0.447151 -0.548676 0.447842"
+                                      mass="2.40017" diaginertia="0.0196896 0.0152225 0.00749914"/>
+                            <joint name="wam/elbow_pitch_joint" pos="0 0 0" axis="0 0 1" range="-0.9 3.14159"/>
+                            <geom class="viz" mesh="elbow_link_fine"/>
+                            <geom class="col" mesh="elbow_link_convex"/>
+                            <geom class="viz" pos="-0.045 -0.073 0" quat="0.707388 0.706825 0 0"
+                                  mesh="forearm_link_fine" rgba="0.4 0.4 0.4 1."/>
+                            <geom class="col" pos="-0.045 -0.073 0" quat="0.707388 0.706825 0 0"
+                                  mesh="forearm_link_convex_decomposition_p1"
+                                  name="forearm_link_convex_decomposition_p1_geom"/>
+                            <geom class="col" pos="-0.045 -0.073 0" quat="0.707388 0.706825 0 0"
+                                  mesh="forearm_link_convex_decomposition_p2"
+                                  name="forearm_link_convex_decomposition_p2_geom"/>
+
+                            <body name="wam/wrist_yaw_link" pos="-0.045 0 0" quat="0.707107 0.707107 0 0">
+                                <inertial pos="8.921e-05 0.00435824 -0.00511217"
+                                          quat="0.708528 -0.000120667 0.000107481 0.705683" mass="0.12376"
+                                          diaginertia="0.0112011 0.0111887 7.58188e-05"/>
+                                <joint name="wam/wrist_yaw_joint" pos="0 0 0" axis="0 0 1" range="-4.55 1.25"
+                                       damping="0.5"/>
+                                <geom class="viz" pos="0 0 0.3" mesh="wrist_yaw_link_fine"/>
+                                <geom class="col" pos="0 0 0.3" mesh="wrist_yaw_link_convex_decomposition_p1"
+                                      name="wrist_yaw_link_convex_decomposition_p1_geom"/>
+                                <geom class="col" pos="0 0 0.3" mesh="wrist_yaw_link_convex_decomposition_p2"
+                                      name="wrist_yaw_link_convex_decomposition_p2_geom"/>
+
+                                <body name="wam/wrist_pitch_link" pos="0 0 0.3" quat="0.707107 -0.707107 0 0">
+                                    <inertial pos="-0.00012262 -0.0246834 -0.0170319"
+                                              quat="0.994687 -0.102891 0.000824211 -0.00336105" mass="0.417974"
+                                              diaginertia="0.000555166 0.000463174 0.00023407"/>
+                                    <joint name="wam/wrist_pitch_joint" pos="0 0 0" axis="0 0 1"
+                                           range="-1.5707 1.5707" damping="0.5"/>
+                                    <geom class="viz" mesh="wrist_pitch_link_fine"/>
+                                    <geom class="col" mesh="wrist_pitch_link_convex_decomposition_p1"
+                                          name="wrist_pitch_link_convex_decomposition_p1_geom"/>
+                                    <geom class="col" mesh="wrist_pitch_link_convex_decomposition_p2"
+                                          name="wrist_pitch_link_convex_decomposition_p2_geom"/>
+                                    <geom class="col" mesh="wrist_pitch_link_convex_decomposition_p3"
+                                          name="wrist_pitch_link_convex_decomposition_p3_geom"/>
+
+                                    <body name="wam/wrist_palm_link" pos="0 -0.06 0" quat="0.707107 0.707107 0 0">
+                                        <inertial pos="-7.974e-05 -0.00323552 -0.00016313"
+                                                  quat="0.594752 0.382453 0.382453 0.594752" mass="0.0686475"
+                                                  diaginertia="7.408e-05 3.81466e-05 3.76434e-05"/>
+                                        <joint name="wam/palm_yaw_joint" damping="0.5" pos="0 0 0" axis="0 0 1"
+                                               range="-2.7 2.7"/>
+                                        <geom class="viz" pos="0 0 -0.06" mesh="wrist_palm_link_fine"/>
+                                        <geom class="col" pos="0 0 -0.06" mesh="wrist_palm_link_convex"
+                                              name="wrist_palm_link_convex_geom"/>
+
+                                        <body name="wam/net" pos="0 0 0.09" quat="0.707107 0.707107 0 0">
+                                            <inertial pos="0 0 0" mass="0.11"/>
+                                            <geom name="shaft" conaffinity="0" contype="0"
+                                                  type="box" size="0.02 0.03 0.009" rgba="0.4 0.4 0.4 1." pos="0. -0.07 0."/>
+                                            <geom name="net_geom" conaffinity="1" contype="1"
+                                                  type="cylinder" size="0.06 0.01" solimp="0. 0. 0.001 0.5 2"
+                                                    rgba="0.4 0.4 0.4 1."/>
+                                            <!--<geom class="x_axis"/>
+                                            <geom class="y_axis"/>
+                                            <geom class="z_axis"/>-->
+                                        </body>
+                                    </body>
+                                </body>
+                            </body>
+                        </body>
+                    </body>
+                </body>
+            </body>
+        </body>
+
+        <body name="ball">
+            <joint name="ball_joint1" type="slide" limited="false" axis="1 0 0 " frictionloss="0."/>
+            <joint name="ball_joint2" type="slide" limited="false" axis="0 1 0 " frictionloss="0."/>
+            <joint name="ball_joint3" type="slide" limited="false" axis="0 0 1 " frictionloss="0."/>
+
+            <geom name="ball_geom" conaffinity="1" contype="1" type="sphere" size="0.03" mass="0.1" rgba="1. 0. 0. 1."/>
+        </body>
+
+        <body name="target_1" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom1" rgba="0. 1. 0. 0."/>
+        </body>
+        <body name="target_2" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom2" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_3" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom3" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_4" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom4" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_5" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom5" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_6" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom6" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_7" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom7" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_8" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom8" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_9" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom9" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_10" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom10" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_11" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom11" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_12" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom12" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_13" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom13" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_14" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom14" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_15" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom15" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_16" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom16" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_17" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom17" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_18" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom18" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_19" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom19" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_20" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom20" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_21" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom21" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_22" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom22" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_23" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom23" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_24" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom24" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_25" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom25" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_26" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom26" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_27" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom27" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_28" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom28" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_29" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom29" rgba="0. 1. 0. 0.5"/>
+        </body>
+        <body name="target_30" pos="0. 0. 0.">
+            <geom type="sphere" size="0.02 0.02 0.02" contype="0" conaffinity="0" name="target_geom30" rgba="0. 1. 0. 0.5"/>
+        </body>
+
+        <camera name="viewer" mode="fixed" pos="1. -1. 2." euler="0. 1.57 0."/>
+        <!--<camera name="visualization" mode="targetbody" target="wam/wrist_yaw_link" pos="1.5 -0.4 2.2"/>
+        <camera name="experiment" mode="fixed" quat="0.44418059 0.41778323 0.54301123 0.57732103" pos="1.5 -0.3 1.33"/>-->
+    </worldbody>
+
+    <!--<equality>
+        <weld body2="wam/net" body1="net_mocap" relpose="0 0 0 1 0 0 0"/>
+    </equality>-->
+
+    <actuator>
+        <motor ctrllimited="true" ctrlrange="-150.0 150.0" joint="wam/base_yaw_joint"/>
+        <motor ctrllimited="true" ctrlrange="-125.0 125.0" joint="wam/shoulder_pitch_joint"/>
+        <motor ctrllimited="true" ctrlrange="-40.0 40.0" joint="wam/shoulder_yaw_joint"/>
+        <motor ctrllimited="true" ctrlrange="-60.0 60.0" joint="wam/elbow_pitch_joint"/>
+        <motor ctrllimited="true" ctrlrange="-5.0 5.0" joint="wam/wrist_yaw_joint"/>
+        <motor ctrllimited="true" ctrlrange="-5.0 5.0" joint="wam/wrist_pitch_joint"/>
+        <motor ctrllimited="true" ctrlrange="-2.0 2.0" joint="wam/palm_yaw_joint"/>
+    </actuator>
+</mujoco>
