@@ -61,7 +61,8 @@ def main():
                                 with open(os.path.join(seed_log_dir, "performance.pkl"), "rb") as f:
                                     type_perf.append(pickle.load(f)[-1])
                             else:
-                                print("Warning! Seed %d has not been evaluated. Maybe there was a problem with this run!" % seed)
+                                print(
+                                    "Warning! Seed %d has not been evaluated. Maybe there was a problem with this run!" % seed)
                         performances[cur_type + appendix] = np.array(type_perf)
 
     best_type = None
@@ -78,7 +79,7 @@ def main():
         if key != best_type:
             mean_perf = np.mean(performances[key])
             se = np.std(performances[key], axis=0) / np.sqrt(len(performances[key]))
-            pvalue = ttest_ind(performances[best_type], performances[key])[1]
+            pvalue = ttest_ind(performances[best_type], performances[key], equal_var=False)[1]
             print("Type: %s, performance: %.2f, std: %.2f, P-Value: %.3e" % (key, mean_perf, se, pvalue))
 
 

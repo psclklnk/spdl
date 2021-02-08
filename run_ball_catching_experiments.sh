@@ -1,6 +1,9 @@
 python -u run_experiment.py --env ball_catching --type self_paced --learner trpo --seed $1
 python -u run_experiment.py --env ball_catching --type self_paced --learner ppo --seed $1
 python -u run_experiment.py --env ball_catching --type self_paced --learner sac --seed $1
+python -u run_experiment.py --env ball_catching --type self_paced_v2 --learner trpo --seed $1
+python -u run_experiment.py --env ball_catching --type self_paced_v2 --learner ppo --seed $1
+python -u run_experiment.py --env ball_catching --type self_paced_v2 --learner sac --seed $1 --true_rewards
 python -u run_experiment.py --env ball_catching --type goal_gan --learner trpo --seed $1
 python -u run_experiment.py --env ball_catching --type goal_gan --learner ppo --seed $1
 python -u run_experiment.py --env ball_catching --type goal_gan --learner sac --seed $1
@@ -14,6 +17,9 @@ python -u run_experiment.py --env ball_catching --type default --learner sac --s
 python -u run_experiment.py --env ball_catching --type self_paced --learner trpo --seed $1 --INIT_CONTEXT False
 python -u run_experiment.py --env ball_catching --type self_paced --learner ppo --seed $1 --INIT_CONTEXT False
 python -u run_experiment.py --env ball_catching --type self_paced --learner sac --seed $1 --INIT_CONTEXT False
+python -u run_experiment.py --env ball_catching --type self_paced_v2 --learner trpo --seed $1 --INIT_CONTEXT False
+python -u run_experiment.py --env ball_catching --type self_paced_v2 --learner ppo --seed $1 --INIT_CONTEXT False
+python -u run_experiment.py --env ball_catching --type self_paced_v2 --learner sac --seed $1 --INIT_CONTEXT False --true_rewards
 python -u run_experiment.py --env ball_catching --type goal_gan --learner trpo --seed $1 --INIT_CONTEXT False
 python -u run_experiment.py --env ball_catching --type goal_gan --learner ppo --seed $1 --INIT_CONTEXT False
 python -u run_experiment.py --env ball_catching --type goal_gan --learner sac --seed $1 --INIT_CONTEXT False

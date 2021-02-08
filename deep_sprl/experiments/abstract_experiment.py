@@ -24,6 +24,7 @@ class CurriculumType(Enum):
     SelfPaced = 3
     Default = 4
     Random = 5
+    SelfPacedv2 = 6
 
     def __str__(self):
         if self.goal_gan():
@@ -32,6 +33,8 @@ class CurriculumType(Enum):
             return "alp_gmm"
         elif self.self_paced():
             return "self_paced"
+        elif self.self_paced_v2():
+            return "self_paced_v2"
         elif self.default():
             return "default"
         else:
@@ -39,6 +42,9 @@ class CurriculumType(Enum):
 
     def self_paced(self):
         return self.value == CurriculumType.SelfPaced.value
+
+    def self_paced_v2(self):
+        return self.value == CurriculumType.SelfPacedv2.value
 
     def goal_gan(self):
         return self.value == CurriculumType.GoalGAN.value
@@ -60,6 +66,8 @@ class CurriculumType(Enum):
             return CurriculumType.ALPGMM
         elif string == str(CurriculumType.SelfPaced):
             return CurriculumType.SelfPaced
+        elif string == str(CurriculumType.SelfPacedv2):
+            return CurriculumType.SelfPacedv2
         elif string == str(CurriculumType.Default):
             return CurriculumType.Default
         elif string == str(CurriculumType.Random):
@@ -233,7 +241,7 @@ class Learner(Enum):
 class ExperimentCallback:
 
     def __init__(self, log_directory, learner, env_wrapper, sp_teacher=None, n_inner_steps=1, n_offset=0,
-                 save_interval=5, step_divider=1):
+                 save_interval=5, step_divider=1, use_true_rew=False):
         self.log_dir = os.path.realpath(log_directory)
         self.learner = learner
         self.env_wrapper = env_wrapper
@@ -245,6 +253,7 @@ class ExperimentCallback:
         self.step_divider = step_divider
         self.iteration = 0
         self.last_time = None
+        self.use_true_rew = use_true_rew
 
         self.format = "   %4d    | %.1E |   %3d    |  %.2E  |  %.2E  |  %.2E   "
         if self.sp_teacher is not None:
@@ -277,8 +286,10 @@ class ExperimentCallback:
 
             if self.sp_teacher is not None:
                 if self.iteration >= self.n_offset and self.iteration % self.n_inner_steps == 0:
-                    vf_inputs, contexts = self.env_wrapper.get_context_buffer()
-                    self.sp_teacher.update_distribution(mean_disc_rew, contexts, self.learner.estimate_value(vf_inputs))
+                    vf_inputs, contexts, rewards = self.env_wrapper.get_context_buffer()
+                    self.sp_teacher.update_distribution(mean_disc_rew, contexts,
+                                                        rewards if self.use_true_rew else self.learner.estimate_value(
+                                                            vf_inputs))
                 context_mean = self.sp_teacher.context_dist.mean()
                 context_std = np.sqrt(np.diag(self.sp_teacher.context_dist.covariance_matrix()))
                 data_tpl += tuple(context_mean.tolist())
@@ -303,18 +314,20 @@ class ExperimentCallback:
 class AbstractExperiment(ABC):
     APPENDIX_KEYS = {"default": ["DISCOUNT_FACTOR", "STEPS_PER_ITER", "LAM"],
                      CurriculumType.SelfPaced: ["ALPHA_OFFSET", "MAX_KL", "OFFSET", "ZETA"],
+                     CurriculumType.SelfPacedv2: ["PERF_LB", "MAX_KL", "OFFSET"],
                      CurriculumType.GoalGAN: ["GG_NOISE_LEVEL", "GG_FIT_RATE", "GG_P_OLD"],
                      CurriculumType.ALPGMM: ["AG_P_RAND", "AG_FIT_RATE", "AG_MAX_SIZE"],
                      CurriculumType.Random: [],
                      CurriculumType.Default: []}
 
-    def __init__(self, base_log_dir, curriculum_name, learner_name, parameters, seed, view=False):
+    def __init__(self, base_log_dir, curriculum_name, learner_name, parameters, seed, view=False, use_true_rew=False):
         self.base_log_dir = base_log_dir
         self.parameters = parameters
         self.curriculum = CurriculumType.from_string(curriculum_name)
         self.learner = Learner.from_string(learner_name)
         self.seed = seed
         self.view = view
+        self.use_true_rew = use_true_rew
         self.process_parameters()
 
     @abstractmethod
@@ -359,7 +372,7 @@ class AbstractExperiment(ABC):
         allowed_overrides = {"DISCOUNT_FACTOR": float, "MAX_KL": float, "ZETA": float, "ALPHA_OFFSET": int,
                              "OFFSET": int, "STEPS_PER_ITER": int, "LAM": float, "AG_P_RAND": float, "AG_FIT_RATE": int,
                              "AG_MAX_SIZE": self.parse_max_size, "GG_NOISE_LEVEL": float, "GG_FIT_RATE": int,
-                             "GG_P_OLD": float}
+                             "GG_P_OLD": float, "PERF_LB": float}
         for key in sorted(self.parameters.keys()):
             if key not in allowed_overrides:
                 raise RuntimeError("Parameter '" + str(key) + "'not allowed'")
@@ -381,11 +394,15 @@ class AbstractExperiment(ABC):
                 tmp = tmp[self.learner]
             leaner_string += "_" + key + "=" + str(tmp).replace(" ", "")
 
+        if self.use_true_rew:
+            leaner_string += "_TRUEREWARDS"
+
         return os.path.join(self.base_log_dir, self.get_env_name(), str(self.curriculum),
                             leaner_string + override_appendix + self.get_other_appendix(), "seed-" + str(self.seed))
 
     def train(self):
         model, timesteps, callback_params = self.create_experiment()
+        callback_params["use_true_rew"] = self.use_true_rew
         log_directory = self.get_log_dir()
         if os.path.exists(os.path.join(log_directory, "performance.pkl")):
             print("Log directory already exists! Going directly to evaluation")
@@ -402,7 +419,8 @@ class AbstractExperiment(ABC):
         sorted_iteration_dirs = np.array(iteration_dirs)[idxs].tolist()
 
         # First evaluate the KL-Divergences if Self-Paced learning was used
-        if self.curriculum.self_paced() and not os.path.exists(os.path.join(log_dir, "kl_divergences.pkl")):
+        if (self.curriculum.self_paced() or self.curriculum.self_paced_v2()) and not \
+                os.path.exists(os.path.join(log_dir, "kl_divergences.pkl")):
             kl_divergences = []
             for iteration_dir in sorted_iteration_dirs:
                 teacher = self.create_self_paced_teacher()

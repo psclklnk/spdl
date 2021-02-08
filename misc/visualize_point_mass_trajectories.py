@@ -15,7 +15,7 @@ rc('text', usetex=True)
 rc('text.latex', preamble=r'\usepackage{amsmath}')
 FONT_SIZE = 7
 
-labels = {"default": "Default", "random": "Random", "alp_gmm": "ALP-GMM", "self_paced": "SPDL", "goal_gan": "GoalGAN"}
+labels = {"default": "Default", "random": "Random", "alp_gmm": "ALP-GMM", "self_paced": "SPDL", "goal_gan": "GoalGAN", "self_paced_v2": "SPDL2"}
 
 
 def main():
@@ -26,9 +26,7 @@ def main():
     parser.add_argument("--save_plot", action="store_true")
     args = parser.parse_args()
 
-    # For SAC, we only run 400 iterations per experiment
-    eval_iter = 395 if args.learner == "sac" else 995
-
+    eval_iter = 395
     # Create the evaluation environment
     exp = PointMassExperiment(args.base_log_dir, "default", args.learner, {}, 1)
     picture_base = os.path.join(os.path.dirname(__file__), "..", args.picture_dir)
@@ -44,6 +42,7 @@ def main():
             ax.plot([-0.25, 0.25], [-2.75, -3.25], linewidth=3, color="red")
 
             exp.curriculum = CurriculumType.from_string(cur_type)
+            exp.use_true_rew = args.learner == "sac" and cur_type == "self_paced_v2"
             type_log_dir = os.path.join(os.path.dirname(__file__), "..", os.path.dirname(exp.get_log_dir()))
             seeds = [int(d.split("-")[1]) for d in os.listdir(type_log_dir) if
                      os.path.isdir(os.path.join(type_log_dir, d))]

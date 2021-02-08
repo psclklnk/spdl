@@ -19,19 +19,20 @@ rc('text', usetex=True)
 FONT_SIZE = 7
 KL_DICT = {"point_mass": [8 * 10 ** -4, 2 * 10 ** 6], "point_mass_2d": [8 * 10 ** -4, 2 * 10 ** 6],
            "ball_catching": [5 * 10 ** -3, 1 * 10 ** 1]}
-METHODS = ["self_paced", "alp_gmm", "random", "default", "goal_gan"]
-LABEL_DICT = {"self_paced": r"SPDL", "alp_gmm": r"ALP-GMM", "random": r"Random",
+METHODS = ["self_paced", "self_paced_v2", "alp_gmm", "random", "default", "goal_gan"]
+LABEL_DICT = {"self_paced": r"SPDL", "self_paced_v2": r"SPDL2", "alp_gmm": r"ALP-GMM", "random": r"Random",
               "default": r"Default", "goal_gan": r"GoalGAN", "sprl": r"SPRL"}
-COLOR_DICT = {"self_paced": "C0", "default": "C1", "random": "C2", "alp_gmm": "C3",
+COLOR_DICT = {"self_paced": "C0", "self_paced_v2": "C1", "default": "C1", "random": "C2", "alp_gmm": "C3",
               "goal_gan": "C4", "sprl": "C8"}
-MARKER_DICT = {"self_paced": "^", "default": "o", "random": "s", "alp_gmm": "<", "goal_gan": "D"}
+MARKER_DICT = {"self_paced": "^", "default": "o", "random": "s", "alp_gmm": "<", "goal_gan": "D", "self_paced_v2": "+"}
 MARKEVERY = {"point_mass": 6, "point_mass_2d": 6, "ball_catching": 3}
 LIMITS = {"point_mass": [-0.1, 10.1], "point_mass_2d": [-0.1, 10.1]}
-ENV_NAMES = {"ball_catching": "Ball Catching", "point_mass": "Point Mass", "point_mass_2d": "Point Mass (2D)"}
+ENV_NAMES = {"ball_catching": "Ball Catching", "point_mass": "Point Mass",
+             "point_mass_2d": "Point Mass (2D)"}
 
 N_DIST_ITERS = 6
-DIST_ITERS = {"point_mass_2d": [0, 50, 80, 100, 120, 200], "ball_catching": [0, 50, 80, 110, 150, 200]}
-DIST_SEEDS = {"point_mass_2d": [2, 7, 16], "ball_catching": [2, 7, 16]}
+DIST_ITERS = {"point_mass_2d": [0, 20, 30, 50, 65, 120], "ball_catching": [0, 50, 80, 110, 150, 200]}
+DIST_SEEDS = {"point_mass_2d": [5, 11, 16], "ball_catching": [2, 7, 16]}
 DIST_PROJECTIONS = {"point_mass_2d": lambda x: x,
                     "ball_catching": lambda x: np.array([-np.cos(x[0]) * x[1], 0.75 + np.sin(x[0]) * x[1]])}
 DIST_XTICKS = {"point_mass_2d": [-4, -2, 0, 2, 4], "ball_catching": [-1, -0.5, 0]}
@@ -39,6 +40,7 @@ DIST_YTICKS = {"point_mass_2d": [0.5, 3, 5.5, 8], "ball_catching": [1, 1.4, 1.8]
 DIST_XLABELS = {"point_mass_2d": "Position", "ball_catching": "X-Position"}
 DIST_YLABELS = {"point_mass_2d": "Width", "ball_catching": "Y-Position"}
 DIST_NSAMPLES = {"point_mass_2d": 20, "ball_catching": 40}
+DIST_SHOW_MEAN = {"point_mass_2d": True, "ball_catching": False}
 
 WIDTH = 5.6
 MUL = 0.4
@@ -133,6 +135,7 @@ def add_plot(base_log_dir, ax, color, max_seed=None, marker="o", markevery=3):
             # raise RuntimeError("No Performance log was found")
 
     if len(seed_performances) > 0:
+        print("Found %d completed seeds" % len(seed_performances))
         min_length = np.min([len(seed_performance) for seed_performance in seed_performances])
         iterations = iterations[0: min_length]
         seed_performances = [seed_performance[0: min_length] for seed_performance in seed_performances]
@@ -150,7 +153,8 @@ def add_plot(base_log_dir, ax, color, max_seed=None, marker="o", markevery=3):
 
 
 def visualize_distribution(exp, ax, iteration, alpha, cval, xticks, yticks, xlabel=None, ylabel=None,
-                           seeds=None, n_samples=5, hide_y_ticks=False, projection=None, markers=None):
+                           seeds=None, n_samples=5, hide_y_ticks=False, projection=None, markers=None,
+                           scatter_mean=False):
     jet = plt.get_cmap("hot")
     c_norm = colors.Normalize(vmin=0, vmax=1)
     scalar_map = cmx.ScalarMappable(norm=c_norm, cmap=jet)
@@ -180,7 +184,9 @@ def visualize_distribution(exp, ax, iteration, alpha, cval, xticks, yticks, xlab
 
         ax.scatter(samples_x, samples_y, color=scalar_map.to_rgba(cv), alpha=alpha, marker=marker, s=5, edgecolors=None)
 
-    ax.scatter(exp.TARGET_MEAN[0], exp.TARGET_MEAN[1], color="black", linewidth=2, marker="x")
+    if scatter_mean:
+        ax.scatter(exp.TARGET_MEAN[0], exp.TARGET_MEAN[1], color="black", linewidth=2, marker="x", clip_on=False,
+                   zorder=100)
 
     # Compute the bounding box of the context space
     xbounds = [exp.LOWER_CONTEXT_BOUNDS[0], exp.UPPER_CONTEXT_BOUNDS[0]]
@@ -213,28 +219,31 @@ def visualize_distribution(exp, ax, iteration, alpha, cval, xticks, yticks, xlab
             ax.yaxis.set_ticklabels(yticks)
 
 
-def add_plots(exp, ax_top, axs_bottom, lines, labels, dist_vis=None):
+def add_plots(exp, ax_top, axs_bottom, lines, labels, dist_vis=None, ignore=[]):
     ax0_limits = [-np.inf, np.inf]
     for method in METHODS:
-        exp.curriculum = CurriculumType.from_string(method)
-        method_dir = os.path.dirname(exp.get_log_dir())
-        if os.path.exists(method_dir):
-            line = add_plot(method_dir, ax_top, COLOR_DICT[method], marker=MARKER_DICT[method],
-                            markevery=MARKEVERY[exp.get_env_name()])
-            if line is not None:
-                lines.append(line)
-                labels.append(LABEL_DICT[method])
-                cur_lim = ax_top.get_xlim()
-                ax0_limits = [np.maximum(ax0_limits[0], cur_lim[0]), np.minimum(ax0_limits[1], cur_lim[1])]
-            if method == "self_paced":
-                if dist_vis is not None and dist_vis == exp.get_env_name():
-                    for i, iter in enumerate(DIST_ITERS[dist_vis]):
-                        visualize_distribution(exp, axs_bottom[i], iter, 0.5, [0., 0.2, 0.4],
-                                               xticks=DIST_XTICKS[dist_vis], yticks=DIST_YTICKS[dist_vis],
-                                               xlabel=DIST_XLABELS[dist_vis], hide_y_ticks=i > 0,
-                                               ylabel=DIST_YLABELS[dist_vis] if i == 0 else None,
-                                               seeds=DIST_SEEDS[dist_vis], n_samples=DIST_NSAMPLES[dist_vis],
-                                               projection=DIST_PROJECTIONS[dist_vis], markers=["o", "^", "s"])
+        if method not in ignore:
+            exp.curriculum = CurriculumType.from_string(method)
+            exp.use_true_rew = "sac" in exp.get_log_dir() and method == "self_paced_v2"
+            method_dir = os.path.dirname(exp.get_log_dir())
+            if os.path.exists(method_dir):
+                line = add_plot(method_dir, ax_top, COLOR_DICT[method], marker=MARKER_DICT[method],
+                                markevery=MARKEVERY[exp.get_env_name()])
+                if line is not None:
+                    lines.append(line)
+                    labels.append(LABEL_DICT[method])
+                    cur_lim = ax_top.get_xlim()
+                    ax0_limits = [np.maximum(ax0_limits[0], cur_lim[0]), np.minimum(ax0_limits[1], cur_lim[1])]
+                if method == "self_paced":
+                    if dist_vis is not None and dist_vis == exp.get_env_name():
+                        for i, iter in enumerate(DIST_ITERS[dist_vis]):
+                            visualize_distribution(exp, axs_bottom[i], iter, 0.5, [0., 0.2, 0.4],
+                                                   xticks=DIST_XTICKS[dist_vis], yticks=DIST_YTICKS[dist_vis],
+                                                   xlabel=DIST_XLABELS[dist_vis], hide_y_ticks=i > 0,
+                                                   ylabel=DIST_YLABELS[dist_vis] if i == 0 else None,
+                                                   seeds=DIST_SEEDS[dist_vis], n_samples=DIST_NSAMPLES[dist_vis],
+                                                   projection=DIST_PROJECTIONS[dist_vis], markers=["o", "^", "s"],
+                                                   scatter_mean=DIST_SHOW_MEAN[dist_vis])
 
     if ax0_limits[0] != -np.inf and ax0_limits[1] != np.inf:
         ax_top.set_xlim(ax0_limits)
@@ -262,18 +271,24 @@ def main():
     global LABEL_DICT
     global COLOR_DICT
     global MARKER_DICT
+    global METHODS
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--base_log_dir", type=str, default="logs")
     parser.add_argument("--env", type=str, default=["point_mass"], nargs="*",
                         choices=["point_mass", "point_mass_2d", "ball_catching"])
     parser.add_argument("--learner", type=str, default=["trpo"], nargs="*", choices=["trpo", "ppo", "sac"])
-    parser.add_argument("--dist_vis", required=True, type=str)
+    parser.add_argument("--dist_vis", required=False, type=str)
+    parser.add_argument("--methods", nargs="*", type=str,
+                        choices=["self_paced", "self_paced_v2", "alp_gmm", "random", "default", "goal_gan"])
 
     args, remainder = parser.parse_known_args()
     parameters = parse_parameters(remainder)
     if len(args.env) != len(args.learner):
         raise RuntimeError("Number of envs and learners must be equal")
+
+    if args.methods is not None and len(args.methods) != 0:
+        METHODS = args.methods
 
     n_envs = len(args.env)
     if n_envs > 2:
@@ -325,8 +340,10 @@ def main():
                 add_sprl_plot(exp, axs_top[k], new_lines, new_labels, args.base_log_dir, COLOR_DICT["sprl"])
         else:
             LABEL_DICT["self_paced"] = r"SPDL*"
+            LABEL_DICT["self_paced_v2"] = r"SPDL2*"
             LABEL_DICT["goal_gan"] = r"GoalGAN*"
             COLOR_DICT["self_paced"] = "C5"
+            COLOR_DICT["self_paced_v2"] = "C6"
             COLOR_DICT["goal_gan"] = "C8"
             MARKER_DICT["self_paced"] = "v"
             MARKER_DICT["goal_gan"] = "d"
@@ -334,9 +351,9 @@ def main():
 
             exp = BallCatchingExperiment(args.base_log_dir, "default", args.learner[k],
                                          {**parameters, "INIT_CONTEXT": False}, 1)
-            LABEL_DICT = {"self_paced": r"SPDL", "goal_gan": r"GoalGAN"}
-            COLOR_DICT = {"self_paced": "C0", "goal_gan": "C4"}
-            MARKER_DICT = {"self_paced": "^", "goal_gan": "D"}
+            LABEL_DICT = {"self_paced": r"SPDL", "goal_gan": r"GoalGAN", "self_paced_v2": r"SPDL2"}
+            COLOR_DICT = {"self_paced": "C0", "goal_gan": "C4", "self_paced_v2": "C1"}
+            MARKER_DICT = {"self_paced": "^", "goal_gan": "D", "self_paced_v2": "x"}
             add_plots(exp, axs_top[k], axs_bottom, new_lines, new_labels, dist_vis="ball_catching")
 
             exp = BallCatchingExperiment(args.base_log_dir, "default", args.learner[k],
@@ -372,7 +389,6 @@ def main():
             filename += env + "_" + learner
         else:
             filename += "_" + env + "_" + learner
-
     key = "+".join(args.env)
     bbox = BBOXES[key] if key in BBOXES else None
     plt.savefig(filename + ".pdf", bbox_extra_artists=(lgd,), bbox_inches=bbox)

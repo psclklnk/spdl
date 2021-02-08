@@ -321,8 +321,8 @@ class GaussianTorchDistribution(TorchDistribution):
     def log_pdf_t(self, x):
         return self.distribution_t.log_prob(x)
 
-    def sample(self):
-        return self.distribution_t.rsample()
+    def sample(self, *args, **kwargs):
+        return self.distribution_t.rsample(*args, **kwargs)
 
     def covariance_matrix(self):
         return self.distribution_t.covariance_matrix.detach().numpy()
