@@ -49,6 +49,7 @@ def main():
                 if callable(exp):
                     exp = exp()
                 exp.curriculum = CurriculumType.from_string(cur_type)
+                exp.use_true_rew = args.learner == "sac" and cur_type == "self_paced_v2"
                 type_log_dir = os.path.join(os.path.dirname(__file__), "..", os.path.dirname(exp.get_log_dir()))
                 if os.path.exists(type_log_dir):
                     seeds = [int(d.split("-")[1]) for d in os.listdir(type_log_dir) if

@@ -44,7 +44,8 @@ DIST_SHOW_MEAN = {"point_mass_2d": True, "ball_catching": False}
 
 WIDTH = 5.6
 MUL = 0.4
-BBOXES = {"point_mass+point_mass_2d": Bbox(np.array([[0.22, 0.], [WIDTH - 0.22, MUL * WIDTH + 0.15]]))}
+BBOXES = {"point_mass+point_mass_2d": Bbox(np.array([[0.22, 0.], [WIDTH - 0.22, MUL * WIDTH + 0.15]])),
+          "ball_catching": Bbox(np.array([[-0.22, 0.], [WIDTH + 0.22, MUL * WIDTH + 0.15]]))}
 
 
 def add_sprl_plot(exp, ax, lines, labels, base_log_dir, color, max_seed=None):
@@ -354,7 +355,7 @@ def main():
             LABEL_DICT = {"self_paced": r"SPDL", "goal_gan": r"GoalGAN", "self_paced_v2": r"SPDL2"}
             COLOR_DICT = {"self_paced": "C0", "goal_gan": "C4", "self_paced_v2": "C1"}
             MARKER_DICT = {"self_paced": "^", "goal_gan": "D", "self_paced_v2": "x"}
-            add_plots(exp, axs_top[k], axs_bottom, new_lines, new_labels, dist_vis="ball_catching")
+            add_plots(exp, axs_top[k], axs_bottom, new_lines, new_labels, dist_vis=args.dist_vis)
 
             exp = BallCatchingExperiment(args.base_log_dir, "default", args.learner[k],
                                          {**parameters, "INIT_POLICY": False}, 1)

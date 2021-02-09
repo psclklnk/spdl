@@ -15,11 +15,12 @@ rc('text', usetex=True)
 FONT_SIZE = 7
 
 labels = {"default": "Default", "goal_gan": "Goal GAN", "alp_gmm*": "ALP-GMM", "self_paced": "SPDL",
-          "self_paced*": "SPDL*", "goal_gan*": "GoalGAN*", "default*": "Default*"}
+          "self_paced*": "SPDL*", "goal_gan*": "GoalGAN*", "default*": "Default*", "self_paced_v2": "SPDL2",
+          "self_paced_v2*": "SPDL2*"}
 colors = {"self_paced": "C0", "default*": "C1", "alp_gmm*": "C3", "goal_gan": "C4", "self_paced*": "C5",
-          "goal_gan*": "C8", "default": "C7"}
+          "goal_gan*": "C8", "default": "C7", "self_paced_v2": "C1", "self_paced_v2*": "C6"}
 priorities = {"self_paced*": 5, "default": 0, "alp_gmm*": 4, "goal_gan*": 2, "self_paced": 6,
-              "goal_gan": 3, "default*": 1}
+              "goal_gan": 3, "default*": 1, "self_paced_v2": 7, "self_paced_v2*": 8}
 
 
 def main():
@@ -42,6 +43,7 @@ def main():
         exp = exp()
         for cur_type in types:
             exp.curriculum = CurriculumType.from_string(cur_type)
+            exp.use_true_rew = args.learner == "sac" and cur_type == "self_paced_v2"
             type_log_dir = os.path.join(os.path.dirname(__file__), "..", os.path.dirname(exp.get_log_dir()))
             if os.path.exists(type_log_dir):
                 seeds = [int(d.split("-")[1]) for d in os.listdir(type_log_dir) if
@@ -76,6 +78,7 @@ def main():
         exp = exp()
         for cur_type in types:
             exp.curriculum = CurriculumType.from_string(cur_type)
+            exp.use_true_rew = args.learner == "sac" and cur_type == "self_paced_v2"
             type_log_dir = os.path.join(os.path.dirname(__file__), "..", os.path.dirname(exp.get_log_dir()))
             if os.path.exists(type_log_dir):
                 print(cur_type + suffix)
