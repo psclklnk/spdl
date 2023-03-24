@@ -6,7 +6,7 @@ gym==0.15.4
 stable-baselines==2.9.0
 pygame==1.9.6
 scikit-learn==0.22.1
-tensorflow==1.15.0
+tensorflow==2.11.1
 mpi4py==3.0.3
 pillow==7.1.1
 emcee
